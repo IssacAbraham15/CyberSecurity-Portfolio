@@ -1,71 +1,97 @@
-# 🏠 Active Directory Home Lab (Jan 2025 – Apr 2025)
+# 🏠 Active Directory Penetration Testing Lab  
+**Duration:** Jan 2025 – Apr 2025  
+**Type:** Home Lab  
+**Focus:** AD setup, management, exploitation, and mitigation
+
+---
 
 ## 🎯 Objective
 
-Set up a fully functional AD domain in a virtualized lab environment to practice:
-- Windows Server administration
-- Active Directory management
-- Vulnerability identification and exploitation
-- Blue-team and hardening concepts
+To simulate a real-world enterprise Windows environment using Active Directory and practice:
+- AD administration and configuration
+- Offensive security techniques
+- Internal network exploitation
+- Privilege escalation in Windows domains
 
 ---
 
-## 🛠️ Lab Environment
+## 🧰 Lab Environment
 
-| Component         | Details                              |
-|------------------|--------------------------------------|
-| Virtualization    | VMware Workstation 17 Pro            |
-| Server OS         | Windows Server 2022                  |
-| Clients           | Windows 10 Enterprise                |
-| Attacker Machine  | Kali Linux                           |
-| Admin Tools       | ADUC, GPMC, DNS, File Sharing        |
-| Security Tools    | Nmap, Nessus, Nikto, Metasploit      |
-
----
-
-## ⚙️ Configuration Tasks Completed
-
-- Installed and configured **Windows Server 2022** on a VM
-- Set up and managed **Active Directory Domain Services (AD DS)**
-- Created and managed **users, groups, and organizational units (OUs)**
-- Configured **DNS**, static IP addresses, and domain join for Windows 10 clients
-- Implemented **Group Policy Objects (GPOs)** for password policy, user restrictions, and login messages
-- Enabled **network file sharing** and controlled permissions
+| Component              | Details                          |
+|------------------------|----------------------------------|
+| **Virtualization Tool** | VMware Workstation 17 Pro        |
+| **Server OS**          | Windows Server 2022              |
+| **Client OS**          | Windows 10 Enterprise            |
+| **Attacker OS**        | Kali Linux (latest version)      |
+| **Network Type**       | Host-only Internal Network       |
+| **Domain Name**        | `lab.local`                      |
 
 ---
 
-## 🔐 Offensive Security Practice
+## ⚙️ Configuration Steps
 
-Simulated internal attacker activity using Kali Linux:
+### Windows Server 2022 (Domain Controller)
+- Installed AD DS (Active Directory Domain Services)
+- Promoted server to Domain Controller (`lab.local`)
+- Configured DNS and DHCP roles
+- Created multiple users, groups, and Organizational Units (OUs)
+- Created GPOs for:
+  - Password policies
+  - Login messages
+  - Restricting access to Control Panel and CMD
+- Set up shared folders and NTFS permissions
 
-### 🔍 Recon & Enumeration:
-- `nmap`, `enum4linux`, `smbclient`, `ldapsearch`
-
-### 🧨 Exploitation Techniques:
-- **LLMNR/NBT-NS Poisoning** using Responder
-- **SMB Relay Attacks**
-- **Kerberoasting** with `GetUserSPNs.py` + Hashcat
-- **Token Impersonation** and `PrintSpoofer`
-- **Pass-the-Hash / Pass-the-Ticket** using Mimikatz
-- **BloodHound + SharpHound** for AD path analysis
-- **LNK file attacks**, **NTLM hash capture**, **MSSQL misconfig**
-
----
-
-## 🧰 Tools Used
-
-- 🖥️ Virtualization: VMware Workstation 17 Pro  
-- ⚙️ AD Management: ADUC, GPMC, DNS Manager  
-- 🔎 Enumeration: enum4linux, ldapsearch, rpcclient  
-- 🔓 Exploitation: Responder, Impacket, CrackMapExec, Mimikatz, BloodHound
+### Windows 10 Client(s)
+- Joined the domain `lab.local`
+- Tested user logins and GPO inheritance
+- Verified DNS and LDAP communication with DC
 
 ---
 
-## 🛡️ Takeaways
+## 🧨 Offensive Testing & Exploitation
 
-- Gained deep understanding of **Active Directory architecture**
-- Practiced **privilege escalation and lateral movement**
-- Identified mitigation strategies such as disabling LLMNR, enforcing strong Kerberos policies, and audit logging
-- Strengthened both **red-team and blue-team** perspectives
+### 🔍 Enumeration
+- `nmap`, `enum4linux`, `rpcclient`, `ldapsearch`, `bloodhound`
+
+### 🧪 Attacks Performed
+
+| Attack Type | Tools Used | Description |
+|------------|------------|-------------|
+| **LLMNR/NBT-NS Poisoning** | Responder | Captured NTLMv2 hashes from misconfigured name resolution |
+| **SMB Relay** | Impacket’s `ntlmrelayx.py` | Relayed authentication to gain access |
+| **Kerberoasting** | Impacket + Hashcat | Requested SPNs, cracked service account hashes |
+| **Token Impersonation** | PrintSpoofer, Rogue Potato | Escalated to SYSTEM privileges |
+| **Credential Dumping** | Mimikatz | Extracted NTLM hashes and plaintext passwords |
+| **LDAP Enumeration** | `ldapdomaindump` | Extracted user/group structure and privileges |
+| **BloodHound Mapping** | SharpHound + BloodHound | Visualized attack paths and privilege escalation chains |
+| **LNK File Exploitation** | Custom payload | Executed malicious shortcut in user’s startup folder |
 
 ---
+
+## 🧠 Key Learning Outcomes
+
+- Deep understanding of how Active Directory functions behind the scenes
+- Simulated attacker mindset within an internal Windows environment
+- Practiced privilege escalation using common red team techniques
+- Learned defensive configurations to mitigate AD-specific attacks
+
+---
+
+## 🛡️ Mitigations Implemented
+
+- Disabled LLMNR and NBT-NS via GPO
+- Enforced complex password and lockout policies
+- Audited privileged accounts and removed excessive rights
+- Enabled PowerShell logging and command line auditing
+- Deployed event log forwarding for centralized visibility
+
+---
+
+## 📸 Screenshots
+
+> _Screenshots available in the `../screenshots/` folder_  
+> Example: BloodHound visualization, Mimikatz hash dump, Responder logs
+
+---
+
+📁 [Back to Projects](../projects/README.md) | [Back to Portfolio Home](../README.md)
