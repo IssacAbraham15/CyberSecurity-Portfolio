@@ -28,4 +28,3 @@ Deployed a virtual AD domain environment using Windows Server 2022 and Kali Linu
 
 ---
 
-📁 [Back to Portfolio Home](../README.md)
