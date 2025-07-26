@@ -2,6 +2,7 @@
 
 **Room:** Lookup  
 **Platform:** TryHackMe  
+**IP Address:** 10.10.56.153  
 **Focus:** Enumeration, Web Exploitation, Privilege Escalation  
 **Difficulty:** Easy/Medium  
 **Status:** Completed ✅
@@ -12,18 +13,18 @@
 
 Performed initial enumeration with Nmap:
 ```bash
-nmap -sC -sV -p- <IP>
+nmap -sC -sV -p- 10.10.56.153
 ```
 
 Identified open ports for SSH and HTTP.
 
 Used **DirBuster** with the wordlist `apache-user-enum-1.txt` to enumerate directories and potential usernames.
 
-📸 ![DirBuster Enumeration](../screenshots/lookup/1.png)
+📸 ![DirBuster Enumeration](../screenshots/lookup/lookup_1.png)
 
 Found `jose` as a valid user.
 
-📸 ![Valid User Found](../screenshots/lookup/2.png)
+📸 ![Valid User Found](../screenshots/lookup/lookup_2.png)
 
 ---
 
@@ -37,9 +38,9 @@ files.lookup.thm/
 
 Added this domain to `/etc/hosts` for local name resolution.
 
-📸 ![Login Redirect](../screenshots/lookup/3.png)
+📸 ![Login Redirect](../screenshots/lookup/lookup_3.png)
 
-📸 ![Updated Hosts File](../screenshots/lookup/4.png)
+📸 ![Updated Hosts File](../screenshots/lookup/lookup_4.png)
 
 ---
 
@@ -47,11 +48,11 @@ Added this domain to `/etc/hosts` for local name resolution.
 
 After successful login, accessed the internal file management page.
 
-📸 ![File Page After Login](../screenshots/lookup/5.png)
+📸 ![File Page After Login](../screenshots/lookup/lookup_5.png)
 
 Attempted to access `/home/think`, but permission was denied.
 
-📸 ![Permission Denied on Home](../screenshots/lookup/6.png)
+📸 ![Permission Denied on Home](../screenshots/lookup/lookup_6.png)
 
 ---
 
@@ -63,7 +64,7 @@ Ran a search to find SUID binaries:
 find / -perm /4000 2>/dev/null
 ```
 
-📸 ![SUID Check](../screenshots/lookup/7.png)
+📸 ![SUID Check](../screenshots/lookup/lookup_7.png)
 
 Discovered `/usr/sbin/pwm` as an exploitable SUID binary.
 
@@ -77,7 +78,7 @@ export PATH=/tmp:$PATH
 /usr/sbin/pwm
 ```
 
-📸 ![PATH Hijack](../screenshots/lookup/8.png)
+📸 ![PATH Hijack](../screenshots/lookup/lookup_8.png)
 
 Successfully escalated privileges.
 
@@ -87,7 +88,7 @@ Successfully escalated privileges.
 
 Performed SSH brute-force login attempts using `hydra`.
 
-📸 ![SSH Brute Force](../screenshots/lookup/9.png)
+📸 ![SSH Brute Force](../screenshots/lookup/lookup_9.png)
 
 ---
 
@@ -95,7 +96,7 @@ Performed SSH brute-force login attempts using `hydra`.
 
 Accessed the user’s home directory and retrieved the `user.txt` flag.
 
-📸 ![User Flag Found](../screenshots/lookup/10.png)
+📸 ![User Flag Found](../screenshots/lookup/lookup_10.png)
 
 ---
 
@@ -110,7 +111,7 @@ Accessed the user’s home directory and retrieved the `user.txt` flag.
 
 ## 📁 Screenshots
 
-Screenshots from the attack chain are stored in the [`../screenshots/lookup/`](../screenshots/lookup/) directory.
+Screenshots related to this room are stored in [`screenshots/lookup/`](../screenshots/lookup/).
 
 ---
 
