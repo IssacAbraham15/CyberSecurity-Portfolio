@@ -11,7 +11,7 @@ This folder contains documentation for my hands-on cybersecurity projects and ho
 
 ## 🏗️ Projects
 
-### 🏠 [Active Directory Home Lab](./ad-lab-setup.md)
+### 🏠 [Active Directory Home Lab](./AD LAB SETUP/ad-lab-setup.md)
 > **Jan 2025 – Apr 2025**  
 Deployed a virtual AD domain environment using Windows Server 2022 and Kali Linux. Practiced exploitation techniques such as Kerberoasting, SMB relay, and LLMNR poisoning. Configured GPOs, DNS, and user/group policies.
 
