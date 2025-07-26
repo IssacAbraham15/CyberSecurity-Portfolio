@@ -7,6 +7,7 @@ This folder contains concise cheat sheets for popular cybersecurity tools I've u
 ## 📄 Available Cheat Sheets
 
 - [Nmap](./nmap.md) — Network scanner for reconnaissance and enumeration
+- [metasploit](./metasploit.md) —  A powerful tool for developing and executing exploit code against remote target machines.
 
 ---
 
