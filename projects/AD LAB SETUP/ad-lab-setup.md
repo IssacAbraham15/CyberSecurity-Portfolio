@@ -85,12 +85,6 @@ To simulate a real-world enterprise Windows environment using Active Directory a
 - Enabled PowerShell logging and command line auditing
 - Deployed event log forwarding for centralized visibility
 
----
-
-## 📸 Screenshots
-
-> _Screenshots available in the `../screenshots/` folder_  
-> Example: BloodHound visualization, Mimikatz hash dump, Responder logs
 
 ---
 
