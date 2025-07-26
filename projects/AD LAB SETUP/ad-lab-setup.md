@@ -69,7 +69,3 @@ Simulated internal attacker activity using Kali Linux:
 - Strengthened both **red-team and blue-team** perspectives
 
 ---
-
-📸 _You can find screenshots in the [`../screenshots`](../screenshots) folder._
-
-📁 _[Return to all Projects](./README.md)_
