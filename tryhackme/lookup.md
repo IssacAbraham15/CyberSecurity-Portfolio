@@ -53,7 +53,7 @@ Using **Burp Suite Intruder** with a **Sniper attack** and the `apache-user-enum
 I then used **Hydra** to brute force the password for `jose`:
 
 ```bash
-hydra -l jose -P /usr/share/wordlists/rockyou.txt lookup.thm http-post-form "/login:username=^USER^&password=^PASS^:F=incorrect"
+hydra -l jose -P /usr/share/wordlists/rockyou.txt lookup.thm http-post-form "/login:username=^USER^&password=^PASS^:F=Wrong"
 ```
 
 - **Password found:** `password123`
@@ -171,5 +171,6 @@ The Lookup room involved a mix of:
 Each step built on the last, and it was a great exercise in real-world exploitation chains.
 
 ---
+🖼️ **Find all screenshots here:** [`screenshots/lookup/`](../screenshots/lookup/)
 
 *Thanks for reading!*
