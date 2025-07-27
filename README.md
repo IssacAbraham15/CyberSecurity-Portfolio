@@ -18,6 +18,6 @@ This portfolio includes:
 - [`tryhackme/`](./tryhackme): CTF-style walkthroughs and notes
 - [`tools/`](./tools): Notes on tools like Nmap, Metasploit, Burp Suite
 - [`projects/`](./projects): Personal labs and system builds
-- [`notes/`](./notes): Theory and methodology (OWASP, MITRE, etc.)
+- [`notes/`](./notes): Notes on vulnerabilities, attacks, defenses, theory and methodology (OWASP, MITRE, etc.)
 
 
