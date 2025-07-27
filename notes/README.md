@@ -7,7 +7,7 @@ This folder contains summarized notes and learning material covering fundamental
 ## 📚 Available Notes
 
 - [OWASP Top 10](./owasp-top-10.md): Common web application vulnerabilities and how to mitigate them
-
+- [Microsoft SharePoint Zero‑Day Vulnerabilities (“ToolShell”)](./sharepoint_toolshell_vulnerability.md): SharePoint on‑prem RCE
 ---
 
 ## 🧠 Upcoming Notes
